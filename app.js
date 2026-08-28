@@ -407,6 +407,8 @@ async function openApp(){
   buildNav();renderMeActions();fillSchoolProfile();await showPage(state.user.role==="admin"?"dashboardPage":"mePage");
 }
 (async()=>{
-  const token=sessionStorage.getItem("eieToken");if(!token)return;
-  state.token=token;try{await openApp()}catch{sessionStorage.removeItem("eieToken");state.token=null}
+  const token=sessionStorage.getItem("eieToken");
+  try{if(token){state.token=token;await openApp()}}
+  catch{sessionStorage.removeItem("eieToken");state.token=null;qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")}
+  finally{document.body.classList.remove("app-booting")}
 })();
