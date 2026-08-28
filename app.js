@@ -29,7 +29,7 @@ const indicators=[
 {code:"D5",domain:"D. Reporting, Reflection and Improvement",text:"Incident reports are consolidated and submitted at term end; SDO findings are synthesized and transmitted as required.",movs:["School consolidation and transmittal","Receiving copy","SDO synthesis","RO/CO transmittal","Submission tracker"]},
 {code:"D6",domain:"D. Reporting, Reflection and Improvement",text:"Dashboard and incident evidence is used to revise the LSCP, close capacity gaps, and improve future support.",movs:["LSCP change log","Improvement/action plan","PIR/SMEA minutes","Budget/resource adjustments","Technical-assistance plan","Completion evidence"]}
 ];
-let state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false,editingSubmissionId:null};
+let state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false,editingSubmissionId:null,hasSubmitted:false};
 let editingEmergencyIndex=null,editingContinuityIndex=null;
 const scoreValues={"Compliant":3,"Partially Compliant":2,"Not Compliant":1};
 function ratingFor(p){if(p==null)return"Not yet rated";if(p>=90)return"Outstanding";if(p>=80)return"Very Satisfactory";if(p>=70)return"Satisfactory";if(p>=60)return"Needs Improvement";return"Needs Immediate Technical Assistance"}
@@ -88,7 +88,7 @@ qs("#registerForm").addEventListener("submit",async e=>{
     toast("Account created and submitted for administrator approval.");qs("#registerForm").reset();setTabs("login");
   }catch(err){qs("#registerError").textContent=err.message}finally{if(button){button.disabled=false;button.textContent=label}}
 });
-qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false,editingSubmissionId:null};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
+qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false,editingSubmissionId:null,hasSubmitted:false};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
 
 function buildChecklist(){
   const tb=qs("#checklistTable tbody");tb.innerHTML="";
@@ -243,7 +243,7 @@ async function loadDraft(){
   fillSchoolProfile();
   if(state.user?.role!=="admin")setDraftMode(hasDraft);
 }
-function setDraftMode(locked){state.draftLocked=Boolean(locked);state.draftSaved=Boolean(locked);const form=qs("#meForm");form?.classList.toggle("draft-locked",state.draftLocked);form?.setAttribute("aria-readonly",String(state.draftLocked));const save=qs("#saveDraft"),edit=qs("#editDraft"),submit=qs("#submitME");if(save)save.disabled=state.draftLocked;if(edit)edit.disabled=!state.draftLocked;if(submit)submit.disabled=!state.draftSaved}
+function setDraftMode(locked){state.draftLocked=Boolean(locked);state.draftSaved=Boolean(locked);const form=qs("#meForm");form?.classList.toggle("draft-locked",state.draftLocked);form?.setAttribute("aria-readonly",String(state.draftLocked));const save=qs("#saveDraft"),edit=qs("#editDraft"),submit=qs("#submitME");if(save)save.disabled=state.draftLocked;if(edit)edit.disabled=!state.draftLocked;if(submit){submit.disabled=!state.draftSaved||(state.hasSubmitted&&!state.editingSubmissionId);submit.textContent=state.editingSubmissionId?"Update Submission":state.hasSubmitted?"Submitted":"Submit"}}
 function renderMeActions(){
   const a=qs("#meActions");a.innerHTML="";
   if(state.user.role==="admin"){
@@ -254,7 +254,7 @@ function renderMeActions(){
   a.innerHTML=`<button class="btn secondary" type="button" id="saveDraft">Save</button><button class="btn gold" type="button" id="editDraft" disabled>Edit</button><button class="btn green" type="button" id="submitME" disabled>Submit</button><button class="btn secondary" type="button" id="printME">Print</button><button class="btn red" type="button" id="pdfME">Save as PDF</button>`;
   qs("#saveDraft").onclick=async()=>{const button=qs("#saveDraft");button.disabled=true;button.textContent="Saving…";try{await api("/draft",{method:"POST",body:JSON.stringify({data:serializeForm()})});setDraftMode(true);toast("M&E Tool saved. You may now submit or click Edit to make changes.")}catch(err){button.disabled=false;toast(err.message)}finally{button.textContent="Save"}};
   qs("#editDraft").onclick=()=>{setDraftMode(false);toast("Editing enabled. Save your changes again before submitting.")};
-  qs("#submitME").onclick=async()=>{if(!state.draftSaved){toast("Save the M&E Tool before submitting.");return}if(!validateReportForSubmission())return;const editing=state.editingSubmissionId;await api("/submit",{method:"POST",body:JSON.stringify({reportId:editing||null})});state.editingSubmissionId=null;qs("#submitME").textContent="Submit";toast(editing?"M&E submission updated successfully.":"M&E report submitted successfully.");await renderMeSubmissionPanel()};
+  qs("#submitME").onclick=async()=>{if(state.hasSubmitted&&!state.editingSubmissionId){toast("This M&E Tool has already been submitted.");return}if(!state.draftSaved){toast("Save the M&E Tool before submitting.");return}if(!validateReportForSubmission())return;const button=qs("#submitME"),editing=state.editingSubmissionId;button.disabled=true;button.textContent=editing?"Updating…":"Submitting…";try{await api("/submit",{method:"POST",body:JSON.stringify({reportId:editing||null})});state.editingSubmissionId=null;state.hasSubmitted=true;toast(editing?"M&E submission updated successfully.":"M&E report submitted successfully.");await renderMeSubmissionPanel()}catch(err){toast(err.message);setDraftMode(true)}};
   qs("#printME").onclick=()=>printMEReport();
   qs("#pdfME").onclick=()=>savePDF();
 }
@@ -409,7 +409,7 @@ function editTimeRemaining(editableUntil){const remaining=new Date(editableUntil
 async function renderMeSubmissionPanel(){
   const panel=qs("#meSubmissionPanel");if(!panel||state.user?.role==="admin")return;
   try{
-    const d=await api("/my-submissions"),rows=d.submissions||[];
+    const d=await api("/my-submissions"),rows=d.submissions||[];state.hasSubmitted=rows.length>0;setDraftMode(state.draftLocked);
     const list=rows.length?`<div class="me-submission-list">${rows.map((r,i)=>`<article class="me-submission-item"><b>Submission ${rows.length-i}</b><time>${new Date(r.submittedAt).toLocaleString()}</time><small class="${r.canEdit?"editable":"locked"}">${r.canEdit?editTimeRemaining(r.editableUntil):"Locked after 24 hours"}</small>${r.canEdit?`<button class="btn gold edit-submission" data-id="${escAttr(r.id)}" type="button">Edit Submission</button>`:`<span class="submission-lock">Editing locked</span><button class="btn secondary print-submission" data-id="${escAttr(r.id)}" type="button">Print Submission</button>`}</article>`).join("")}</div>`:`<p class="me-submission-empty">No submitted reports yet.</p>`;
     panel.innerHTML=`<div class="me-submission-heading"><strong>My Submissions</strong><span>${rows.length}</span></div>${list}`;
     qsa(".edit-submission").forEach(button=>button.onclick=()=>{const report=rows.find(r=>r.id===button.dataset.id);if(!report?.canEdit){toast("The 24-hour editing period has expired.");renderMeSubmissionPanel();return}fillForm(report.data||{});state.editingSubmissionId=report.id;setDraftMode(false);const submit=qs("#submitME");if(submit)submit.textContent="Update Submission";qs("#mePage")?.scrollIntoView({behavior:"smooth",block:"start"});toast("Submission loaded for editing. Save your changes, then click Update Submission.")});
