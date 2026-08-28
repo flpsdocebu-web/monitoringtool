@@ -1,4 +1,10 @@
 RewriteEngine On
+
+# Allow real files such as /api/setup.php and static assets to open normally.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
 RewriteRule ^api(?:/(.*))?$ api/index.php?route=$1 [QSA,L]
 
 <IfModule mod_headers.c>
