@@ -9,11 +9,11 @@
 <meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=edd08f57-a746-4f33-829e-e21a9cfe13be">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DepEd Cebu Province EIE M&E System</title>
-  <link rel="stylesheet" href="/styles.css?v=20260828-2">
-  <link rel="stylesheet" href="/features.css?v=20260828-2">
+  <link rel="stylesheet" href="/styles.css?v=20260828-3">
+  <link rel="stylesheet" href="/features.css?v=20260828-3">
   <link rel="stylesheet" href="/print-report.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script defer src="/app.js?v=20260828-2"></script>
+  <script defer src="/app.js?v=20260828-3"></script>
 </head>
 <body>
   <div id="toast" class="toast hidden" aria-live="polite"></div>
@@ -119,19 +119,22 @@
             <p class="required-note"><span aria-hidden="true">*</span> All fields are required before submitting the report.</p>
             <article class="card">
               <h3>Part I. School Profile</h3>
+              <p class="section-intro">Confirm the school identity and provide the current contact, enrollment, personnel, and LSCP preparedness information.</p>
+              <h4 class="form-subheading">School Identity and Monitoring Information</h4>
               <div class="grid three">
                 <label>Region<input name="region" value="Region VII – Central Visayas"></label>
                 <label>Schools Division<input name="division" value="Cebu Province"></label>
                 <label>District<input name="district" id="meDistrict"></label>
                 <label>Name of School<input name="schoolName" id="meSchoolName"></label>
                 <label>School ID<input name="schoolId" id="meSchoolId"></label>
-                <label>School Year<input name="schoolYear" value="2026-2027"></label>
+                <label>Date of Monitoring<input name="monitoringDate" type="date"></label>
+              </div>
+              <h4 class="form-subheading">Contact and Classification</h4>
+              <div class="grid three">
                 <label>School Address<input name="schoolAddress"></label>
                 <label>School Contact Details<input name="schoolContact" placeholder="Telephone, mobile number, or email"></label>
                 <label>Name of School Head<input name="schoolHead"></label>
                 <label>School Head Contact Number<input name="schoolHeadContact" type="tel"></label>
-                <label>Designation<input name="designation"></label>
-                <label>Date of Monitoring<input name="monitoringDate" type="date"></label>
                 <label>School Type<select name="schoolType"><option value="">Select...</option><option>Elementary</option><option>Secondary</option><option>Integrated</option><option>CLC/ALS</option><option>Other</option></select></label>
                 <label>Classification / Location<select name="schoolClassification"><option value="">Select...</option><option>Urban</option><option>Rural</option><option>Coastal</option><option>Island</option><option>Indigenous Community</option><option>Other</option></select></label>
               </div>
@@ -162,6 +165,7 @@
 
             <article class="card">
               <h3>Part II. Emergency / Hazard Profile</h3>
+              <p class="section-intro">Record the affected area, activation decision, assessment basis, people affected, learning response, communication, reporting, and planned review.</p>
               <div class="grid two">
                 <label>Type of Emergency / Hazard
                   <select name="hazardType">
@@ -177,7 +181,6 @@
                     <option>Other</option>
                   </select>
                 </label>
-                <label>Date Emergency Occurred<input name="emergencyDate" type="date"></label>
                 <label>Affected Area<input name="affectedArea" placeholder="Barangay, sitio, campus, or affected school area"></label>
                 <label>Date and Time Level Activated<input name="levelActivatedAt" type="datetime-local"></label>
                 <label>Affected Learners<input name="affectedLearners" type="number" min="0"></label>
@@ -186,7 +189,6 @@
                 <label>Date/Time Reported to EiE Dashboard / SDO<input name="reportedAt" type="datetime-local"></label>
                 <label>Planned Review / Transition Date<input name="reviewDate" type="date"></label>
               </div>
-              <label>Brief Situation Description<textarea name="situationDescription" rows="4"></textarea></label>
               <div class="grid two">
                 <label>Assessment Sources Used<textarea name="assessmentSources" rows="3" placeholder="Rapid assessment, DRRM report, inspection, learner tracking, etc."></textarea></label>
                 <label>Learning Experiences / Resources Activated<textarea name="activatedResources" rows="3"></textarea></label>
@@ -219,7 +221,7 @@
             <article class="card">
               <h3>Part IV. Compliance and Implementation Checklist</h3>
               <p class="checklist-guide"><strong>Automatic MOV rating:</strong> The score starts at 0.00%. No MOV selected = Not Yet Rated; 1–2 MOVs = Not Compliant; at least 3 but not all = Partially Compliant; all MOVs = Compliant. Use Not Applicable only when justified.</p>
-              <div class="score-panel" aria-live="polite"><div><span class="score-label">LIVE OVERALL SCORE</span><strong id="liveScore">—</strong><small id="livePoints">Answer an applicable checklist item to calculate your score.</small></div><div id="liveRating" class="rating-pill neutral">Not yet rated</div></div>
+              <div class="score-panel" aria-live="polite"><div><span class="score-label">LIVE OVERALL SCORE</span><strong id="liveScore">0.00%</strong><small id="livePoints">Check an MOV to begin scoring.</small></div><div id="liveRating" class="rating-pill neutral">Not yet rated</div></div>
               <div class="rating-legend"><span><b>90–100</b> Outstanding</span><span><b>80–89</b> Very Satisfactory</span><span><b>70–79</b> Satisfactory</span><span><b>60–69</b> Needs Improvement</span><span><b>Below 60</b> Needs Immediate Technical Assistance</span></div>
               <div class="table-wrap">
                 <table id="checklistTable">
