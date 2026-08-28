@@ -9,11 +9,11 @@
 <meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=edd08f57-a746-4f33-829e-e21a9cfe13be">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DepEd Cebu Province EIE M&E System</title>
-  <link rel="stylesheet" href="/styles.css?v=20260828-4">
-  <link rel="stylesheet" href="/features.css?v=20260828-4">
+  <link rel="stylesheet" href="/styles.css?v=20260828-5">
+  <link rel="stylesheet" href="/features.css?v=20260828-5">
   <link rel="stylesheet" href="/print-report.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script defer src="/app.js?v=20260828-4"></script>
+  <script defer src="/app.js?v=20260828-5"></script>
 </head>
 <body>
   <div id="toast" class="toast hidden" aria-live="polite"></div>
@@ -140,7 +140,6 @@
               </div>
               <h4 class="form-subheading">Enrollment</h4>
               <div class="grid enrollment-grid">
-                <label>Kinder<input name="enrollmentKinder" type="number" min="0"></label>
                 <label>Elementary<input name="enrollmentES" type="number" min="0"></label>
                 <label>JHS<input name="enrollmentJHS" type="number" min="0"></label>
                 <label>SHS<input name="enrollmentSHS" type="number" min="0"></label>
@@ -155,12 +154,10 @@
                 <label>Volunteers / Partners<input name="personnelVolunteers" type="number" min="0"></label>
               </div>
               <div class="grid two">
-                <label>Major Hazards / Recurring Disruptions<textarea name="recurringHazards" rows="3" placeholder="Profile-level recurring risks; enter specific incidents in Part II."></textarea></label>
                 <label>Date LSCP Developed / Last Updated<input name="lscpUpdatedDate" type="date"></label>
                 <label>Stakeholders Involved in LSCP Development<textarea name="lscpStakeholders" rows="3"></textarea></label>
                 <label>LSCP Reflected in SIP/AIP<select name="lscpInSipAip"><option value="">Select...</option><option>Yes</option><option>Partly</option><option>No</option></select></label>
               </div>
-              <label>SIP/AIP Reference / Page<input name="lscpReference"></label>
             </article>
 
             <article class="card">
