@@ -3,6 +3,13 @@
 Deploy the repository's `main` branch to the domain's `public_html` directory.
 Use PHP 8.1 or newer and make sure the `api` directory is writable by PHP.
 
+For event-day traffic, keep PHP 8.2 or newer enabled and use a Hostinger plan
+with enough PHP workers for the expected simultaneous users. The application
+uses SQLite WAL mode, a 15-second busy timeout, and automatic write retries to
+handle bursts of account registrations without immediately failing on a locked
+database. Hosting worker, CPU, memory, and entry-process limits still determine
+how many requests can execute at the exact same moment.
+
 After the files are deployed, open:
 
 `https://monitoring.sdocebuprovince.com/api/setup.php`

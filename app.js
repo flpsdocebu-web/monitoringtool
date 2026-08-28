@@ -68,23 +68,24 @@ qs("#toggleLoginPassword").addEventListener("click",()=>{
   const f=qs("#loginPassword");const show=f.type==="password";f.type=show?"text":"password";qs("#toggleLoginPassword").textContent=show?"Hide":"Show";
 });
 qs("#loginForm").addEventListener("submit",async e=>{
-  e.preventDefault(); qs("#loginError").textContent="";
+  e.preventDefault();qs("#loginError").textContent="";const button=e.submitter||qs('#loginForm button[type="submit"]'),label=button?.textContent;if(button){button.disabled=true;button.textContent="Signing in…"}
   try{
     const d=await api("/login",{method:"POST",body:JSON.stringify({username:qs("#loginUsername").value.trim(),password:qs("#loginPassword").value})});
     state.token=d.token;state.user=d.user;sessionStorage.setItem("eieToken",d.token);await openApp();
-  }catch(err){qs("#loginError").textContent=err.message}
+  }catch(err){qs("#loginError").textContent=err.message}finally{if(button){button.disabled=false;button.textContent=label}}
 });
 qs("#registerForm").addEventListener("submit",async e=>{
   e.preventDefault();qs("#registerError").textContent="";
   const password=qs("#regPassword").value,confirm=qs("#regConfirmPassword").value;
   if(password!==confirm){qs("#registerError").textContent="Passwords do not match.";return}
+  const button=e.submitter||qs('#registerForm button[type="submit"]'),label=button?.textContent;if(button){button.disabled=true;button.textContent="Creating account…"}
   try{
     await api("/register",{method:"POST",body:JSON.stringify({
       district:qs("#regDistrict").value.trim(),schoolName:qs("#regSchoolName").value.trim(),schoolId:qs("#regSchoolId").value.trim(),
       username:qs("#regUsername").value.trim(),password,confirmPassword:confirm
     })});
     toast("Account created and submitted for administrator approval.");qs("#registerForm").reset();setTabs("login");
-  }catch(err){qs("#registerError").textContent=err.message}
+  }catch(err){qs("#registerError").textContent=err.message}finally{if(button){button.disabled=false;button.textContent=label}}
 });
 qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[]};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
 
