@@ -4,6 +4,7 @@
 .record-container{display:grid;gap:10px;margin-top:12px;padding:13px;border:1px dashed #b9cbe0;border-radius:12px;background:#f8fbff}
 .record-container>.muted{margin:0}
 .saved-record{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:13px 14px;background:#fff;border:1px solid var(--border);border-left:4px solid var(--blue2);border-radius:10px}
+.saved-record-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}.saved-record-actions .btn{white-space:nowrap}@media(max-width:600px){.saved-record{flex-direction:column}.saved-record-actions{width:100%}.saved-record-actions .btn{flex:1}}
 .saved-record>div{display:flex;flex-direction:column;gap:4px}
 .saved-record strong{color:var(--navy);font-size:14px}
 .saved-record small{color:var(--muted)}

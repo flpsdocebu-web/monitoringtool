@@ -30,6 +30,7 @@ const indicators=[
 {code:"D6",domain:"D. Reporting, Reflection and Improvement",text:"Dashboard and incident evidence is used to revise the LSCP, close capacity gaps, and improve future support.",movs:["LSCP change log","Improvement/action plan","PIR/SMEA minutes","Budget/resource adjustments","Technical-assistance plan","Completion evidence"]}
 ];
 let state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false,editingSubmissionId:null};
+let editingEmergencyIndex=null,editingContinuityIndex=null;
 const scoreValues={"Compliant":3,"Partially Compliant":2,"Not Compliant":1};
 function ratingFor(p){if(p==null)return"Not yet rated";if(p>=90)return"Outstanding";if(p>=80)return"Very Satisfactory";if(p>=70)return"Satisfactory";if(p>=60)return"Needs Improvement";return"Needs Immediate Technical Assistance"}
 function calculateScore(items){const a=(items||[]).filter(x=>Object.hasOwn(scoreValues,x.status));const earned=a.reduce((n,x)=>n+scoreValues[x.status],0),maximum=a.length*3,percentage=maximum?Math.round(earned/maximum*10000)/100:null;return{earnedPoints:earned,maximumPoints:maximum,applicableItems:a.length,percentage,rating:ratingFor(percentage)}}
@@ -196,25 +197,28 @@ function fillForm(data){
 }
 function formValue(name){return qs("#meForm").elements.namedItem(name)?.value||""}
 function clearFields(names){names.forEach(name=>{const el=qs("#meForm").elements.namedItem(name);if(!el)return;if(el instanceof RadioNodeList)[...el].forEach(x=>x.checked=false);else el.value=""})}
+function setNamedField(name,value){const el=qs("#meForm").elements.namedItem(name);if(!el)return;if(el instanceof RadioNodeList)[...el].forEach(x=>x.checked=x.value===String(value??""));else el.value=value??""}
 function renderEmergencyRecords(){
   const box=qs("#emergencyRecords");if(!box)return;const rows=state.emergencyRecords||[];
-  box.innerHTML=rows.length?rows.map((r,i)=>`<div class="saved-record"><div><span class="record-number">Emergency ${i+1}</span><strong>${esc(r.hazardType)} — ${esc(r.affectedArea)}</strong><small>${esc(formatDateTime(r.levelActivatedAt)||"Activation time not specified")} • ${esc(r.affectedLearners||0)} learner(s) • ${esc(r.affectedPersonnel||0)} personnel</small><p><b>Learning response:</b> ${esc(r.activatedResources||"—")}</p><small><b>Approved by:</b> ${esc(r.decisionMaker||"—")} &nbsp; • &nbsp; <b>Review:</b> ${esc(printDate(r.reviewDate)||"—")}</small></div><button class="btn red remove-emergency" data-index="${i}" type="button">Remove</button></div>`).join(""):`<p class="muted">No emergency records saved yet.</p>`;
-  qsa(".remove-emergency").forEach(b=>b.onclick=()=>{state.emergencyRecords.splice(Number(b.dataset.index),1);renderEmergencyRecords();toast("Emergency record removed.")});
+  box.innerHTML=rows.length?rows.map((r,i)=>`<div class="saved-record"><div><span class="record-number">Emergency ${i+1}</span><strong>${esc(r.hazardType)} — ${esc(r.affectedArea)}</strong><small>${esc(formatDateTime(r.levelActivatedAt)||"Activation time not specified")} • ${esc(r.affectedLearners||0)} learner(s) • ${esc(r.affectedPersonnel||0)} personnel</small><p><b>Learning response:</b> ${esc(r.activatedResources||"—")}</p><small><b>Approved by:</b> ${esc(r.decisionMaker||"—")} &nbsp; • &nbsp; <b>Review:</b> ${esc(printDate(r.reviewDate)||"—")}</small></div><div class="saved-record-actions"><button class="btn gold edit-emergency" data-index="${i}" type="button">Edit</button><button class="btn red remove-emergency" data-index="${i}" type="button">Remove</button></div></div>`).join(""):`<p class="muted">No emergency records saved yet.</p>`;
+  qsa(".edit-emergency").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.index),record=state.emergencyRecords[i];emergencyFieldNames.forEach(name=>setNamedField(name,record[name]));editingEmergencyIndex=i;qs("#saveEmergency").textContent="Update Emergency";qs("#saveEmergency").scrollIntoView({behavior:"smooth",block:"center"});toast(`Editing Emergency ${i+1}.`)});
+  qsa(".remove-emergency").forEach(b=>b.onclick=()=>{state.emergencyRecords.splice(Number(b.dataset.index),1);editingEmergencyIndex=null;qs("#saveEmergency").textContent="Save Emergency";renderEmergencyRecords();toast("Emergency record removed.")});
 }
 function saveEmergencyRecord(){
   if(!validateNamedFields(emergencyFieldNames,"Please complete all required Emergency / Hazard fields."))return;
   const record=Object.fromEntries(emergencyFieldNames.map(name=>[name,formValue(name)]));record.savedAt=new Date().toISOString();
-  state.emergencyRecords.push(record);renderEmergencyRecords();qs("#addEmergency").disabled=false;toast("Emergency record saved.");
+  const updating=Number.isInteger(editingEmergencyIndex);if(updating)state.emergencyRecords[editingEmergencyIndex]=record;else state.emergencyRecords.push(record);editingEmergencyIndex=null;qs("#saveEmergency").textContent="Save Emergency";renderEmergencyRecords();qs("#addEmergency").disabled=false;toast(updating?"Emergency record updated.":"Emergency record saved.");
 }
 function renderContinuityRecords(){
   const box=qs("#continuityRecords");if(!box)return;const rows=state.continuityRecords||[];
-  box.innerHTML=rows.length?rows.map((r,i)=>`<div class="saved-record"><div><span class="record-number">Activation ${i+1}</span><strong>${esc(r.level)}</strong><small>${esc(r.activationDate||"Date not specified")} • ${esc(r.status||"Status not specified")} • ${esc(r.duration||"Duration not specified")}</small><p>${esc(r.arrangement||"No learning delivery arrangement entered.")}</p></div><button class="btn red remove-continuity" data-index="${i}" type="button">Remove</button></div>`).join(""):`<p class="muted">No continuity-level records saved yet.</p>`;
-  qsa(".remove-continuity").forEach(b=>b.onclick=()=>{state.continuityRecords.splice(Number(b.dataset.index),1);renderContinuityRecords();toast("Continuity record removed.")});
+  box.innerHTML=rows.length?rows.map((r,i)=>`<div class="saved-record"><div><span class="record-number">Activation ${i+1}</span><strong>${esc(r.level)}</strong><small>${esc(r.activationDate||"Date not specified")} • ${esc(r.status||"Status not specified")} • ${esc(r.duration||"Duration not specified")}</small><p>${esc(r.arrangement||"No learning delivery arrangement entered.")}</p></div><div class="saved-record-actions"><button class="btn gold edit-continuity" data-index="${i}" type="button">Edit</button><button class="btn red remove-continuity" data-index="${i}" type="button">Remove</button></div></div>`).join(""):`<p class="muted">No continuity-level records saved yet.</p>`;
+  qsa(".edit-continuity").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.index),r=state.continuityRecords[i];setNamedField("continuityLevel",r.level);setNamedField("learningArrangement",r.arrangement);setNamedField("continuityActivationDate",r.activationDate);setNamedField("continuityDuration",r.duration);setNamedField("continuityResponsible",r.responsible);setNamedField("continuityStatus",r.status);setNamedField("continuityNotes",r.notes);editingContinuityIndex=i;qs("#saveContinuity").textContent="Update Continuity Level";qs("#saveContinuity").scrollIntoView({behavior:"smooth",block:"center"});toast(`Editing Activation ${i+1}.`)});
+  qsa(".remove-continuity").forEach(b=>b.onclick=()=>{state.continuityRecords.splice(Number(b.dataset.index),1);editingContinuityIndex=null;qs("#saveContinuity").textContent="Save Continuity Level";renderContinuityRecords();toast("Continuity record removed.")});
 }
 function saveContinuityRecord(){
   if(!validateNamedFields(continuityFieldNames,"Please complete all required Learning Continuity fields."))return;
   const record={level:formValue("continuityLevel"),arrangement:formValue("learningArrangement"),activationDate:formValue("continuityActivationDate"),duration:formValue("continuityDuration"),responsible:formValue("continuityResponsible"),status:formValue("continuityStatus"),notes:formValue("continuityNotes"),savedAt:new Date().toISOString()};
-  state.continuityRecords.push(record);renderContinuityRecords();qs("#addContinuity").disabled=false;toast("Continuity-level record saved.");
+  const updating=Number.isInteger(editingContinuityIndex);if(updating)state.continuityRecords[editingContinuityIndex]=record;else state.continuityRecords.push(record);editingContinuityIndex=null;qs("#saveContinuity").textContent="Save Continuity Level";renderContinuityRecords();qs("#addContinuity").disabled=false;toast(updating?"Continuity-level record updated.":"Continuity-level record saved.");
 }
 function renderTARecords(){
   const box=qs("#taRecords");if(!box)return;const rows=state.technicalAssistanceRecords||[];
@@ -227,9 +231,9 @@ function saveTARecord(){
   state.technicalAssistanceRecords.push(record);renderTARecords();qs("#addTA").disabled=false;toast("Technical assistance record saved.");
 }
 qs("#saveEmergency").onclick=saveEmergencyRecord;
-qs("#addEmergency").onclick=()=>{clearFields(emergencyFieldNames);qs("#addEmergency").disabled=true;toast("Ready for another emergency record.")};
+qs("#addEmergency").onclick=()=>{editingEmergencyIndex=null;clearFields(emergencyFieldNames);qs("#saveEmergency").textContent="Save Emergency";qs("#addEmergency").disabled=true;toast("Ready for another emergency record.")};
 qs("#saveContinuity").onclick=saveContinuityRecord;
-qs("#addContinuity").onclick=()=>{clearFields(["continuityLevel","learningArrangement","continuityActivationDate","continuityDuration","continuityResponsible","continuityStatus","continuityNotes"]);qs("#addContinuity").disabled=true;toast("Ready for another continuity activation.")};
+qs("#addContinuity").onclick=()=>{editingContinuityIndex=null;clearFields(["continuityLevel","learningArrangement","continuityActivationDate","continuityDuration","continuityResponsible","continuityStatus","continuityNotes"]);qs("#saveContinuity").textContent="Save Continuity Level";qs("#addContinuity").disabled=true;toast("Ready for another continuity activation.")};
 qs("#saveTA").onclick=saveTARecord;
 qs("#addTA").onclick=()=>{clearFields(taFieldNames);qs("#addTA").disabled=true;toast("Ready for another technical assistance entry.")};
 async function loadDraft(){
