@@ -94,6 +94,7 @@ function buildChecklist(){
   indicators.forEach((_,i)=>{qsa(`input[name="indicator_${i}_mov_option"],#indicator_${i}_na`).forEach(x=>x.addEventListener("change",()=>updateIndicatorRating(i)));updateIndicatorRating(i)});configureRequiredFields();updateLiveScore();
 }
 const emergencyFieldNames=["hazardType","affectedArea","levelActivatedAt","affectedLearners","affectedPersonnel","decisionMaker","reportedAt","reviewDate","assessmentSources","activatedResources","communicationChannels"];
+const emergencyFieldLabels={hazardType:"Type of Emergency / Hazard",affectedArea:"Affected Area",levelActivatedAt:"Date and Time Level Activated",affectedLearners:"Affected Learners",affectedPersonnel:"Affected Personnel",decisionMaker:"Decision Maker / Approving Authority",reportedAt:"Date/Time Reported to EiE Dashboard / SDO",reviewDate:"Planned Review / Transition Date",assessmentSources:"Assessment Sources Used",activatedResources:"Learning Experiences / Resources Activated",communicationChannels:"Communication Channels Used"};
 const continuityFieldNames=["continuityLevel","learningArrangement","continuityActivationDate","continuityDuration","continuityResponsible","continuityStatus","continuityNotes"];
 const taFieldNames=["taIssue","taRootCause","taProvided","taResponsible","taTimeline","taStatus","taFollowUp"];
 function configureRequiredFields(){
@@ -105,10 +106,11 @@ function configureRequiredFields(){
 }
 function validateNamedFields(names,message){
   const form=qs("#meForm");
+  qsa("#meForm .field-invalid").forEach(x=>x.classList.remove("field-invalid"));
   for(const name of names){
     const field=form.elements.namedItem(name);
     const valid=field instanceof RadioNodeList?[...field].some(x=>x.checked):String(field?.value||"").trim()!=="";
-    if(!valid){toast(message);const target=field instanceof RadioNodeList?[...field][0]:field;target?.focus();target?.scrollIntoView({behavior:"smooth",block:"center"});return false}
+    if(!valid){const target=field instanceof RadioNodeList?[...field][0]:field,label=emergencyFieldLabels[name]||target?.closest("label")?.childNodes?.[0]?.textContent?.trim()||"required field";target?.classList.add("field-invalid");toast(`${message} Missing: ${label}.`);target?.focus();target?.scrollIntoView({behavior:"smooth",block:"center"});return false}
   }
   return true;
 }
