@@ -29,7 +29,7 @@ const indicators=[
 {code:"D5",domain:"D. Reporting, Reflection and Improvement",text:"Incident reports are consolidated and submitted at term end; SDO findings are synthesized and transmitted as required.",movs:["School consolidation and transmittal","Receiving copy","SDO synthesis","RO/CO transmittal","Submission tracker"]},
 {code:"D6",domain:"D. Reporting, Reflection and Improvement",text:"Dashboard and incident evidence is used to revise the LSCP, close capacity gaps, and improve future support.",movs:["LSCP change log","Improvement/action plan","PIR/SMEA minutes","Budget/resource adjustments","Technical-assistance plan","Completion evidence"]}
 ];
-let state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[]};
+let state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false};
 const scoreValues={"Compliant":3,"Partially Compliant":2,"Not Compliant":1};
 function ratingFor(p){if(p==null)return"Not yet rated";if(p>=90)return"Outstanding";if(p>=80)return"Very Satisfactory";if(p>=70)return"Satisfactory";if(p>=60)return"Needs Improvement";return"Needs Immediate Technical Assistance"}
 function calculateScore(items){const a=(items||[]).filter(x=>Object.hasOwn(scoreValues,x.status));const earned=a.reduce((n,x)=>n+scoreValues[x.status],0),maximum=a.length*3,percentage=maximum?Math.round(earned/maximum*10000)/100:null;return{earnedPoints:earned,maximumPoints:maximum,applicableItems:a.length,percentage,rating:ratingFor(percentage)}}
@@ -87,7 +87,7 @@ qs("#registerForm").addEventListener("submit",async e=>{
     toast("Account created and submitted for administrator approval.");qs("#registerForm").reset();setTabs("login");
   }catch(err){qs("#registerError").textContent=err.message}finally{if(button){button.disabled=false;button.textContent=label}}
 });
-qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[]};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
+qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
 
 function buildChecklist(){
   const tb=qs("#checklistTable tbody");tb.innerHTML="";
@@ -234,9 +234,11 @@ qs("#addTA").onclick=()=>{clearFields(taFieldNames);qs("#addTA").disabled=true;t
 async function loadDraft(){
   buildChecklist();fillSchoolProfile();
   state.emergencyRecords=[];state.continuityRecords=[];state.technicalAssistanceRecords=[];renderEmergencyRecords();renderContinuityRecords();renderTARecords();
-  try{const d=await api("/draft");if(d.draft)fillForm(d.draft)}catch{}
+  let hasDraft=false;try{const d=await api("/draft");if(d.draft){fillForm(d.draft);hasDraft=true}}catch{}
   fillSchoolProfile();
+  if(state.user?.role!=="admin")setDraftMode(hasDraft);
 }
+function setDraftMode(locked){state.draftLocked=Boolean(locked);state.draftSaved=Boolean(locked);const form=qs("#meForm");form?.classList.toggle("draft-locked",state.draftLocked);form?.setAttribute("aria-readonly",String(state.draftLocked));const save=qs("#saveDraft"),edit=qs("#editDraft"),submit=qs("#submitME");if(save)save.disabled=state.draftLocked;if(edit)edit.disabled=!state.draftLocked;if(submit)submit.disabled=!state.draftSaved}
 function renderMeActions(){
   const a=qs("#meActions");a.innerHTML="";
   if(state.user.role==="admin"){
@@ -244,9 +246,10 @@ function renderMeActions(){
     qs("#adminSave").onclick=async()=>{try{await api("/draft",{method:"POST",body:JSON.stringify({data:serializeForm()})});toast("M&E record saved successfully.")}catch(err){toast(err.message)}};
     qs("#adminPrint").onclick=()=>printMEReport();return
   }
-  a.innerHTML=`<button class="btn secondary" type="button" id="saveDraft">Save</button><button class="btn green" type="button" id="submitME">Submit</button><button class="btn secondary" type="button" id="printME">Print</button><button class="btn red" type="button" id="pdfME">Save as PDF</button>`;
-  qs("#saveDraft").onclick=async()=>{await api("/draft",{method:"POST",body:JSON.stringify({data:serializeForm()})});toast("Draft saved.")};
-  qs("#submitME").onclick=async()=>{if(!validateReportForSubmission())return;const d=serializeForm();await api("/submit",{method:"POST",body:JSON.stringify({data:d})});toast("M&E report submitted successfully.")};
+  a.innerHTML=`<button class="btn secondary" type="button" id="saveDraft">Save</button><button class="btn gold" type="button" id="editDraft" disabled>Edit</button><button class="btn green" type="button" id="submitME" disabled>Submit</button><button class="btn secondary" type="button" id="printME">Print</button><button class="btn red" type="button" id="pdfME">Save as PDF</button>`;
+  qs("#saveDraft").onclick=async()=>{const button=qs("#saveDraft");button.disabled=true;button.textContent="Saving…";try{await api("/draft",{method:"POST",body:JSON.stringify({data:serializeForm()})});setDraftMode(true);toast("M&E Tool saved. You may now submit or click Edit to make changes.")}catch(err){button.disabled=false;toast(err.message)}finally{button.textContent="Save"}};
+  qs("#editDraft").onclick=()=>{setDraftMode(false);toast("Editing enabled. Save your changes again before submitting.")};
+  qs("#submitME").onclick=async()=>{if(!state.draftSaved){toast("Save the M&E Tool before submitting.");return}if(!validateReportForSubmission())return;const d=serializeForm();await api("/submit",{method:"POST",body:JSON.stringify({data:d})});toast("M&E report submitted successfully.")};
   qs("#printME").onclick=()=>printMEReport();
   qs("#pdfME").onclick=()=>savePDF();
 }
@@ -338,8 +341,8 @@ async function renderUsers(){
   const d=await api("/users");
   const schoolUsers=d.users.filter(u=>u.role!=="admin"),active=schoolUsers.filter(u=>u.status==="active").length,pending=schoolUsers.length-active,districts=new Set(schoolUsers.map(u=>(u.district||"Unassigned").trim().toLowerCase())).size;
   qs("#usersPage").innerHTML=`<div class="page-title"><div><div class="kicker">ADMINISTRATION</div><h2>User Management</h2><p>Review and manage school accounts by district.</p></div></div>
-  <div class="stats user-stats"><div class="stat"><span>Total School Accounts</span><strong>${schoolUsers.length}</strong><small>Registered users</small></div><div class="stat"><span>Approved Accounts</span><strong>${active}</strong><small>Can access the system</small></div><div class="stat"><span>Pending Approval</span><strong>${pending}</strong><small>Waiting for activation</small></div><div class="stat"><span>District Coverage</span><strong>${districts} / 54</strong><small>${Math.max(0,54-districts)} districts without registered accounts</small></div></div>
-  <article class="card district-distribution-card"><div class="district-distribution-heading"><div><h3>District Account Distribution</h3><p class="muted">Each pastel donut shows the district's percentage of all registered school accounts. Donuts appear as accounts are registered across the 54 districts.</p></div><span class="badge gray">${districts} of 54 represented</span></div>${districtDonutCards(schoolUsers)}</article>
+  <div class="stats user-stats"><div class="stat"><span>Total School Accounts</span><strong>${schoolUsers.length}</strong><small>Registered users</small></div><div class="stat"><span>Approved Accounts</span><strong>${active}</strong><small>Can access the system</small></div><div class="stat"><span>Pending Approval</span><strong>${pending}</strong><small>Waiting for activation</small></div><div class="stat"><span>District Coverage</span><strong>${districts} / 58</strong><small>${Math.max(0,58-districts)} districts without registered accounts</small></div></div>
+  <article class="card district-distribution-card"><div class="district-distribution-heading"><div><h3>District Account Distribution</h3><p class="muted">Each pastel donut shows the district's percentage of all registered school accounts. Donuts appear as accounts are registered across the 58 listed districts.</p></div><span class="badge gray">${districts} of 58 represented</span></div>${districtDonutCards(schoolUsers)}</article>
   <article class="card"><div class="user-toolbar"><div><h3>Registered School Accounts</h3><p class="muted">Select accounts individually or check all visible accounts for bulk approval.</p></div><div class="user-toolbar-actions"><label class="select-all-users"><input id="selectAllUsers" type="checkbox"> Check all accounts</label><button id="approveSelectedUsers" class="btn green" type="button" disabled>Approve Selected</button><input id="userSearch" placeholder="Search school, district, ID, or username"></div></div><div id="userGroups"></div></article>`;
   const renderFiltered=()=>{const term=qs("#userSearch").value.trim().toLowerCase(),filtered=schoolUsers.filter(u=>`${u.schoolName} ${u.district} ${u.schoolId} ${u.username}`.toLowerCase().includes(term));qs("#userGroups").innerHTML=userDistrictGroups(filtered);qs("#selectAllUsers").checked=false;qs("#selectAllUsers").indeterminate=false;bindUserActions();updateBulkUserControls()};
   qs("#userSearch").oninput=renderFiltered;
