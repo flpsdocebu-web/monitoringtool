@@ -56,7 +56,12 @@ function setTabs(mode){
   qs("#registerForm").classList.toggle("hidden",mode!=="register");
   qs("#loginTab").classList.toggle("active",mode==="login");
   qs("#registerTab").classList.toggle("active",mode==="register");
+  if(mode==="login")clearLoginFields();
 }
+function clearLoginFields(){const user=qs("#loginUsername"),pass=qs("#loginPassword");if(user){user.value="";user.readOnly=true}if(pass){pass.value="";pass.type="password";pass.readOnly=true}qs("#toggleLoginPassword").textContent="Show";qs("#loginError").textContent=""}
+[qs("#loginUsername"),qs("#loginPassword")].forEach(field=>{field.addEventListener("focus",()=>field.readOnly=false);field.addEventListener("pointerdown",()=>field.readOnly=false)});
+window.addEventListener("pageshow",clearLoginFields);
+requestAnimationFrame(clearLoginFields);
 qs("#loginTab").addEventListener("click",()=>setTabs("login"));
 qs("#registerTab").addEventListener("click",()=>setTabs("register"));
 qs("#toggleLoginPassword").addEventListener("click",()=>{
@@ -81,7 +86,7 @@ qs("#registerForm").addEventListener("submit",async e=>{
     toast("Account created and submitted for administrator approval.");qs("#registerForm").reset();setTabs("login");
   }catch(err){qs("#registerError").textContent=err.message}
 });
-qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[]};qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
+qs("#logoutBtn").addEventListener("click",()=>{sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[]};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
 
 function buildChecklist(){
   const tb=qs("#checklistTable tbody");tb.innerHTML="";

@@ -36,15 +36,15 @@
           <button id="registerTab" class="tab" type="button">Create Account</button>
         </div>
 
-        <form id="loginForm" class="auth-form">
+        <form id="loginForm" class="auth-form" autocomplete="off">
           <h3>Welcome back</h3>
           <p class="muted">Sign in to continue to the M&E system.</p>
           <label>Username
-            <input id="loginUsername" autocomplete="username" required>
+            <input id="loginUsername" name="eie_login_user" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-bwignore="true" readonly required>
           </label>
           <label>Password
             <div class="password-wrap">
-              <input id="loginPassword" type="password" autocomplete="current-password" required>
+              <input id="loginPassword" name="eie_login_access" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore="true" readonly required>
               <button id="toggleLoginPassword" type="button" class="text-btn">Show</button>
             </div>
           </label>
