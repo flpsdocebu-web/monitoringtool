@@ -184,7 +184,7 @@ function fillForm(data){
   state.technicalAssistanceRecords=Array.isArray(data.technicalAssistanceRecords)?data.technicalAssistanceRecords:[];
   if(!state.technicalAssistanceRecords.length&&(data.technicalAssistance||data.responsiblePerson||data.overallStatus))state.technicalAssistanceRecords=[{taIssue:data.gaps||"Legacy report issue / gap",taRootCause:"Not specified in legacy report",taProvided:data.technicalAssistance||"Not specified in legacy report",taResponsible:data.responsiblePerson||"Not specified in legacy report",taTimeline:data.targetDate||"Not specified",taStatus:String(data.overallStatus||"").includes("Fully")?"Completed":String(data.overallStatus||"").includes("Ongoing")?"Ongoing":"Open",taFollowUp:data.nextSteps||"Not specified in legacy report"}];
   for(const [k,v] of Object.entries(data)){
-    if(k==="checklist"||k==="schoolYear"||v==null||typeof v==="object")continue;
+    if(k==="checklist"||v==null||typeof v==="object")continue;
     const el=qs("#meForm").elements.namedItem(k);if(!el)continue;
     if(el instanceof RadioNodeList){[...el].forEach(x=>x.checked=x.value===v)} else el.value=v;
   }
