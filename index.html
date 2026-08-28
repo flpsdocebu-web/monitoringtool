@@ -9,11 +9,11 @@
 <meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=edd08f57-a746-4f33-829e-e21a9cfe13be">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DepEd Cebu Province EIE M&E System</title>
-  <link rel="stylesheet" href="/styles.css?v=20260828-5">
-  <link rel="stylesheet" href="/features.css?v=20260828-5">
+  <link rel="stylesheet" href="/styles.css?v=20260828-6">
+  <link rel="stylesheet" href="/features.css?v=20260828-6">
   <link rel="stylesheet" href="/print-report.css">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script defer src="/app.js?v=20260828-5"></script>
+  <script defer src="/app.js?v=20260828-6"></script>
 </head>
 <body>
   <div id="toast" class="toast hidden" aria-live="polite"></div>
@@ -187,10 +187,10 @@
                 <label>Planned Review / Transition Date<input name="reviewDate" type="date"></label>
               </div>
               <div class="grid two">
-                <label>Assessment Sources Used<textarea name="assessmentSources" rows="3" placeholder="Rapid assessment, DRRM report, inspection, learner tracking, etc."></textarea></label>
+                <label>Assessment Sources Used<select name="assessmentSources"><option value="">Select...</option><option>Rapid Assessment</option><option>DRRM Report</option><option>Inspection Report</option><option>Learner Tracking Records</option><option>Incident Report</option><option>LGU / Barangay Report</option><option>Multiple Assessment Sources</option><option>Other</option></select></label>
                 <label>Learning Experiences / Resources Activated<textarea name="activatedResources" rows="3"></textarea></label>
               </div>
-              <label>Communication Channels Used<textarea name="communicationChannels" rows="3" placeholder="SMS, calls, group chat, radio, school page, barangay announcement, etc."></textarea></label>
+              <label>Communication Channels Used<select name="communicationChannels"><option value="">Select...</option><option>SMS / Text Message</option><option>Phone Calls</option><option>Group Chat</option><option>Radio Announcement</option><option>School Social Media Page</option><option>Barangay Announcement</option><option>Email</option><option>Printed Notice</option><option>Multiple Communication Channels</option><option>Other</option></select></label>
               <div class="section-actions"><button class="btn primary" id="saveEmergency" type="button">Save Emergency</button><button class="btn secondary" id="addEmergency" type="button" disabled>Add Another Emergency</button></div>
               <div id="emergencyRecords" class="record-container"><p class="muted">No emergency records saved yet.</p></div>
             </article>
