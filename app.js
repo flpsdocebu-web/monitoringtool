@@ -148,7 +148,7 @@ function buildNav(){
 async function showPage(id){
   qsa(".page").forEach(p=>p.classList.add("hidden"));qs("#"+id).classList.remove("hidden");
   qsa("#sidebarNav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
-  const submissionPanel=qs("#meSubmissionPanel"),showSubmissionPanel=id==="mePage"&&state.user?.role!=="admin";submissionPanel?.classList.toggle("hidden",!showSubmissionPanel);if(showSubmissionPanel)await renderMeSubmissionPanel();
+  const submissionPanel=qs("#meSubmissionPanel"),showSubmissionPanel=id==="mePage"&&state.user?.role!=="admin";submissionPanel?.classList.toggle("hidden",!showSubmissionPanel);const submissionPanelTask=showSubmissionPanel?renderMeSubmissionPanel():Promise.resolve();
   if(id==="dashboardPage") await renderDashboard();
   if(id==="usersPage") await renderUsers();
   if(id==="submissionsPage") await renderSubmissions();
@@ -156,7 +156,7 @@ async function showPage(id){
   if(id==="myReportsPage") await renderMyReports();
   if(id==="profilePage") renderProfile();
   if(id==="settingsPage") renderSettings();
-  if(id==="mePage") await loadDraft();
+  if(id==="mePage")await Promise.all([submissionPanelTask,loadDraft()]);else await submissionPanelTask;
 }
 function fillSchoolProfile(){
   if(state.user.role!=="admin"){
@@ -277,7 +277,7 @@ function buildPrintReport(){
   const domainRows=[...new Set(indicators.map(x=>x.domain))].map(domain=>{const items=(d.checklist||[]).filter((x,i)=>(x.domain||indicators[i]?.domain)===domain),domainScore=calculateScore(items),domainCounts={C:0,PC:0,NC:0,NA:0};items.forEach(x=>{if(short[x.status])domainCounts[short[x.status]]++});return`<tr><td>${esc(domain.replace(/^[A-H]\. /,""))}</td><td>${domainCounts.C}</td><td>${domainCounts.PC}</td><td>${domainCounts.NC}</td><td>${domainCounts.NA}</td><td>${domainScore.applicableItems}</td><td>${domainScore.percentage==null?"—":domainScore.percentage.toFixed(2)+"%"}</td></tr>`}).join("");
   qs("#printReport").innerHTML=`
     <div class="print-sheet print-cover">
-      <header class="report-header"><img src="/assets/cebu-province-logo.png" alt=""><div><div>REPUBLIC OF THE PHILIPPINES</div><strong>DEPARTMENT OF EDUCATION</strong><small>SCHOOLS DIVISION OF CEBU PROVINCE</small></div></header>
+      <header class="report-header"><img src="/assets/cebu-province-logo-web.png" alt=""><div><div>REPUBLIC OF THE PHILIPPINES</div><strong>DEPARTMENT OF EDUCATION</strong><small>SCHOOLS DIVISION OF CEBU PROVINCE</small></div></header>
       <div class="cover-title"><h1>MONITORING AND<br>EVALUATION TOOL</h1><h2>Learning and Service Continuity Plan (LSCP)</h2><p>Anchored on DepEd Order No. 14, s. 2026<br>Guidelines on Learning Continuity in Emergencies</p></div>
       <table class="form-table cover-details">${printCell("School",d.schoolName)}${printCell("Schools Division Office",d.division)}${printCell("Region",d.region)}${printCell("Monitoring Date",printDate(d.monitoringDate))}${printCell("Evaluator / Team",d.monitoredBy)}</table>
       <p class="controlled">CONTROLLED WORKING COPY &nbsp;•&nbsp; OFFICIAL SYSTEM-GENERATED REPORT</p>
@@ -316,8 +316,8 @@ function buildPrintReport(){
 function printMEReport(){buildPrintReport();document.body.classList.add("printing-report");qs("#printReport").setAttribute("aria-hidden","false");setTimeout(()=>window.print(),60)}
 window.addEventListener("afterprint",()=>{document.body.classList.remove("printing-report");qs("#printReport")?.setAttribute("aria-hidden","true")});
 async function renderDashboard(){
-  const d=await api("/dashboard");
-  let reports=d.recent||[];try{reports=(await api("/submissions")).submissions||reports}catch{}
+  const [d,submissionResult]=await Promise.all([api("/dashboard"),api("/submissions").catch(()=>null)]);
+  const reports=submissionResult?.submissions||d.recent||[];
   const latest=[...[...reports].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt)).reduce((m,r)=>{const key=r.schoolId||String(r.schoolName||"").trim().toLowerCase()||r.id;if(!m.has(key))m.set(key,r);return m},new Map()).values()];
   const scores=latest.map(scoreOfReport).filter(s=>s.percentage!=null);
   const average=scores.length?scores.reduce((n,s)=>n+s.percentage,0)/scores.length:null;
