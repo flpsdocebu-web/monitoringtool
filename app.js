@@ -135,17 +135,21 @@ enrollmentNames.forEach(name=>qs("#meForm").elements.namedItem(name)?.addEventLi
 
 function navItems(){
   if(state.user.role==="admin") return [
-    ["dashboardPage","Dashboard"],["mePage","M&E Tool"],["usersPage","User Management"],["submissionsPage","Submitted Reports"],["analyticsPage","Reports & Analytics"],["settingsPage","Settings"]
+    ["dashboardPage","Dashboard","dashboard"],["mePage","M&E Tool","clipboard"],["usersPage","User Management","users"],["submissionsPage","Submitted Reports","reports"],["analyticsPage","Reports & Analytics","analytics"],["settingsPage","Settings","settings"]
   ];
-  return [["mePage","M&E Tool"],["myReportsPage","My Submitted Reports"],["profilePage","Profile"]];
+  return [["mePage","M&E Tool","clipboard"],["myReportsPage","My Submitted Reports","reports"],["profilePage","Profile","profile"]];
 }
+const navIcons={dashboard:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z"/></svg>',clipboard:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h6V3H9v2Zm-2 0V3h2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2h2v2h2v16H5V5h2Zm0 2v12h10V7h-2v2H9V7H7Zm2 5h6v2H9v-2Zm0 4h5v2H9v-2Z"/></svg>',users:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6-1a3 3 0 1 0 0-6 5.8 5.8 0 0 1 0 6ZM9 13c-4 0-7 2-7 5v2h14v-2c0-3-3-5-7-5Zm7.5.3c1.8 1.1 2.8 2.7 2.8 4.7v2H22v-2c0-2.3-2.2-4-5.5-4.7Z"/></svg>',reports:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l4 4v14H5V3Zm2 2v14h11V9h-4V5H7Zm2 7h7v2H9v-2Zm0 4h7v2H9v-2Z"/></svg>',analytics:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10h4v10H4Zm6 0V4h4v16h-4Zm6 0v-7h4v7h-4Z"/></svg>',settings:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19.4 13 .1-1-.1-1 2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 3.5h-4l-.3 2.6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5-.1 1 .1 1-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5ZM13 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z"/></svg>',profile:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6Z"/></svg>'};
+function closeMobileMenu(){document.body.classList.remove("sidebar-open");const toggle=qs("#menuToggle");if(toggle){toggle.setAttribute("aria-expanded","false");toggle.setAttribute("aria-label","Open navigation menu")}}
+function toggleMobileMenu(){const opening=!document.body.classList.contains("sidebar-open");document.body.classList.toggle("sidebar-open",opening);qs("#menuToggle")?.setAttribute("aria-expanded",String(opening));qs("#menuToggle")?.setAttribute("aria-label",opening?"Close navigation menu":"Open navigation menu")}
 function buildNav(){
   const n=qs("#sidebarNav");n.innerHTML="";
-  navItems().forEach(([id,label])=>{
-    const b=document.createElement("button");b.type="button";b.dataset.page=id;b.innerHTML=`<b>•</b><span>${label}</span>`;
-    b.addEventListener("click",()=>showPage(id));n.appendChild(b);
+  navItems().forEach(([id,label,icon])=>{
+    const b=document.createElement("button");b.type="button";b.dataset.page=id;b.innerHTML=`<i class="nav-icon">${navIcons[icon]||navIcons.reports}</i><span>${label}</span>`;
+    b.addEventListener("click",()=>{closeMobileMenu();showPage(id)});n.appendChild(b);
   });
 }
+qs("#menuToggle").addEventListener("click",toggleMobileMenu);qs("#sidebarBackdrop").addEventListener("click",closeMobileMenu);window.addEventListener("resize",()=>{if(innerWidth>620)closeMobileMenu()});document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMobileMenu()});
 async function showPage(id){
   qsa(".page").forEach(p=>p.classList.add("hidden"));qs("#"+id).classList.remove("hidden");
   qsa("#sidebarNav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));

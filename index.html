@@ -9,10 +9,10 @@
 <meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=edd08f57-a746-4f33-829e-e21a9cfe13be">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DepEd Cebu Province EIE M&E System</title>
-  <link rel="stylesheet" href="/styles.css?v=20260828-32">
+  <link rel="stylesheet" href="/styles.css?v=20260829-36">
   <link rel="stylesheet" href="/features.css?v=20260829-35">
   <link rel="stylesheet" href="/print-report.css">
-  <script defer src="/app.js?v=20260829-35"></script>
+  <script defer src="/app.js?v=20260829-36"></script>
 </head>
 <body class="app-booting">
   <div id="bootScreen" class="boot-screen" aria-live="polite"><img src="/assets/cebu-province-logo-web.png" alt=""><strong>EIE M&amp;E SYSTEM</strong><span>Opening your session…</span></div>
@@ -87,6 +87,7 @@
 
   <section id="appView" class="hidden">
     <header class="topbar">
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Open navigation menu" aria-controls="mobileSidebar" aria-expanded="false"><span></span><span></span><span></span></button>
       <div class="top-brand">
         <img src="/assets/cebu-province-logo-web.png" alt="" class="top-logo">
         <div><strong>EIE M&E SYSTEM</strong><small>Schools Division of Cebu Province</small></div>
@@ -101,10 +102,11 @@
     </header>
 
     <div class="shell">
-      <aside class="sidebar">
+      <aside id="mobileSidebar" class="sidebar">
         <nav id="sidebarNav"></nav>
         <section id="meSubmissionPanel" class="me-submission-panel hidden" aria-label="M&E submission history"></section>
       </aside>
+      <button id="sidebarBackdrop" class="sidebar-backdrop" type="button" aria-label="Close navigation menu"></button>
 
       <main class="main">
         <section id="dashboardPage" class="page hidden"></section>
