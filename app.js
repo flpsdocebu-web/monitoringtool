@@ -91,7 +91,7 @@ qs("#registerForm").addEventListener("submit",async e=>{
   }catch(err){qs("#registerError").textContent=err.message}finally{if(button){button.disabled=false;button.textContent=label}}
 });
 qs("#logoutBtn").addEventListener("click",async()=>{try{await api("/logout",{method:"POST"})}catch{}clearInterval(presenceTimer);presenceTimer=null;sessionStorage.removeItem("eieToken");state={token:null,user:null,emergencyRecords:[],continuityRecords:[],technicalAssistanceRecords:[],draftSaved:false,draftLocked:false,editingSubmissionId:null,hasSubmitted:false};clearLoginFields();qs("#appView").classList.add("hidden");qs("#authView").classList.remove("hidden")});
-function startPresence(){clearInterval(presenceTimer);const ping=()=>{if(state.token&&document.visibilityState==="visible")api("/presence",{method:"POST"}).catch(()=>{})};ping();presenceTimer=setInterval(ping,60000)}
+function startPresence(){clearInterval(presenceTimer);const ping=()=>{if(state.token&&document.visibilityState==="visible")api("/presence",{method:"POST"}).catch(()=>{})};setTimeout(ping,2000);presenceTimer=setInterval(ping,60000)}
 
 function buildChecklist(){
   const tb=qs("#checklistTable tbody");tb.innerHTML="";
@@ -149,6 +149,7 @@ function buildNav(){
 async function showPage(id){
   qsa(".page").forEach(p=>p.classList.add("hidden"));qs("#"+id).classList.remove("hidden");
   qsa("#sidebarNav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+  const page=qs("#"+id),dynamicPages=["dashboardPage","usersPage","submissionsPage","analyticsPage","myReportsPage"];if(dynamicPages.includes(id)&&!page.dataset.loaded)page.innerHTML=`<div class="page-loading"><div class="loading-spinner"></div><strong>Loading ${esc(qs(`#sidebarNav button[data-page="${id}"]`)?.textContent||"page")}…</strong><span>Please wait a moment.</span></div>`;
   const submissionPanel=qs("#meSubmissionPanel"),showSubmissionPanel=id==="mePage"&&state.user?.role!=="admin";submissionPanel?.classList.toggle("hidden",!showSubmissionPanel);const submissionPanelTask=showSubmissionPanel?renderMeSubmissionPanel():Promise.resolve();
   if(id==="dashboardPage") await renderDashboard();
   if(id==="usersPage") await renderUsers();
@@ -157,6 +158,7 @@ async function showPage(id){
   if(id==="myReportsPage") await renderMyReports();
   if(id==="profilePage") renderProfile();
   if(id==="settingsPage") renderSettings();
+  page.dataset.loaded="true";
   if(id==="mePage")await Promise.all([submissionPanelTask,loadDraft()]);else await submissionPanelTask;
 }
 function fillSchoolProfile(){
@@ -427,10 +429,10 @@ qs("#modalClose").onclick=closeModal;qs("#modalBackdrop").onclick=closeModal;
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function escAttr(v){return esc(v)}
 async function openApp(){
-  const me=await api("/me");state.user=me.user;qs("#authView").classList.add("hidden");qs("#appView").classList.remove("hidden");
+  if(!state.user){const me=await api("/me");state.user=me.user}qs("#authView").classList.add("hidden");qs("#appView").classList.remove("hidden");
   qs("#headerName").textContent=state.user.role==="admin"?"Administrator":state.user.schoolName;
   qs("#headerRole").textContent=state.user.role==="admin"?`System Administrator • SY ${currentSchoolYear()}`:`${state.user.district} • School ID ${state.user.schoolId} • SY ${currentSchoolYear()}`;
-  startPresence();buildNav();renderMeActions();fillSchoolProfile();await showPage(state.user.role==="admin"?"dashboardPage":"mePage");if(state.user.role!=="admin"&&state.user.districtValid===false)setTimeout(()=>toast("Your registered district name is not recognized. Please contact the administrator to correct it."),150);
+  startPresence();buildNav();renderMeActions();fillSchoolProfile();const initialPage=state.user.role==="admin"?"dashboardPage":"mePage";showPage(initialPage).catch(err=>{const page=qs("#"+initialPage);if(page)page.innerHTML=`<div class="card load-error"><h3>Unable to load this page</h3><p>${esc(err.message||"Please refresh and try again.")}</p><button class="btn primary" type="button" onclick="location.reload()">Refresh</button></div>`});if(state.user.role!=="admin"&&state.user.districtValid===false)setTimeout(()=>toast("Your registered district name is not recognized. Please contact the administrator to correct it."),150);
 }
 (async()=>{
   const token=sessionStorage.getItem("eieToken");
