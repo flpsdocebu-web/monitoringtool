@@ -142,7 +142,7 @@ enrollmentNames.forEach(name=>qs("#meForm").elements.namedItem(name)?.addEventLi
 
 function navItems(){
   if(state.user.role==="admin") return [
-    ["dashboardPage","Dashboard","dashboard"],["mePage","M&E Tool","clipboard"],["usersPage","User Management","users"],["submissionsPage","Submitted Reports","reports"],["analyticsPage","Reports & Analytics","analytics"],["settingsPage","Settings","settings"]
+    ["dashboardPage","Dashboard","dashboard"],["mePage","M&E Tool","clipboard"],["usersPage","User Management","users"],["submissionsPage","Submitted Reports","reports"],["analyticsPage","Reports & Analytics","analytics"]
   ];
   return [["mePage","M&E Tool","clipboard"],["myReportsPage","My Submitted Reports","reports"],["profilePage","Profile","profile"],["settingsPage","Settings","settings"]];
 }
