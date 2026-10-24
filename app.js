@@ -46,14 +46,21 @@ function updateLiveScore(){const box=qs("#liveScore");if(!box)return;const s=cal
 function qs(s){return document.querySelector(s)}
 function qsa(s){return [...document.querySelectorAll(s)]}
 function toast(msg){const t=qs("#toast");t.textContent=msg;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),3500)}
+const fastCachePaths=new Set(["/dashboard","/users","/submissions","/analytics","/draft","/my-submissions"]),fastCachePrefix="eieFastCache:",fastCacheMaxAge=120000;
+function clearFastDataCache(){for(let i=sessionStorage.length-1;i>=0;i--){const key=sessionStorage.key(i);if(key?.startsWith(fastCachePrefix))sessionStorage.removeItem(key)}}
+function readFastData(path){try{const saved=JSON.parse(sessionStorage.getItem(fastCachePrefix+path)||"null");return saved&&Date.now()-saved.savedAt<fastCacheMaxAge?saved.data:null}catch{return null}}
+function writeFastData(path,data){try{sessionStorage.setItem(fastCachePrefix+path,JSON.stringify({savedAt:Date.now(),data}))}catch{}}
 async function api(path,opts={}){
+  const method=String(opts.method||"GET").toUpperCase(),cacheable=method==="GET"&&fastCachePaths.has(path);if(cacheable){const cached=readFastData(path);if(cached)return cached}
   const headers={"Content-Type":"application/json",...(opts.headers||{})};
   if(state.token) headers.Authorization=`Bearer ${state.token}`;
   let r;try{r=await fetch(API+path,{...opts,headers})}catch{throw new Error("Cannot connect to the website service. Please refresh and try again.")}
   const raw=await r.text();let data={};try{data=raw?JSON.parse(raw):{}}catch{}
   if(!r.ok) throw new Error(data.error||(r.status>=500?"The website service is temporarily unavailable. Please try again.":"Request failed."));
+  if(cacheable)writeFastData(path,data);else if(method!=="GET"&&path!=="/presence")clearFastDataCache();
   return data;
 }
+async function prefetchAdminMenus(){if(state.user?.role!=="admin")return;for(const path of ["/users","/submissions","/analytics","/draft"]){if(!readFastData(path)){try{await api(path)}catch{}}}}
 function setTabs(mode){
   qs("#loginForm").classList.toggle("hidden",mode!=="login");
   qs("#registerForm").classList.toggle("hidden",mode!=="register");
@@ -436,7 +443,7 @@ async function openApp(){
   if(!state.user){const me=await api("/me");state.user=me.user}qs("#authView").classList.add("hidden");qs("#appView").classList.remove("hidden");
   qs("#headerName").textContent=state.user.role==="admin"?"Administrator":state.user.schoolName;
   qs("#headerRole").textContent=state.user.role==="admin"?`System Administrator • SY ${currentSchoolYear()}`:`${state.user.district} • School ID ${state.user.schoolId} • SY ${currentSchoolYear()}`;
-  startPresence();buildNav();renderMeActions();fillSchoolProfile();const initialPage=state.user.role==="admin"?"dashboardPage":"mePage";showPage(initialPage).catch(err=>{const page=qs("#"+initialPage);if(page)page.innerHTML=`<div class="card load-error"><h3>Unable to load this page</h3><p>${esc(err.message||"Please refresh and try again.")}</p><button class="btn primary" type="button" onclick="location.reload()">Refresh</button></div>`});if(state.user.role!=="admin"&&state.user.districtValid===false)setTimeout(()=>toast("Your registered district name is not recognized. Please contact the administrator to correct it."),150);
+  startPresence();buildNav();renderMeActions();fillSchoolProfile();const initialPage=state.user.role==="admin"?"dashboardPage":"mePage";showPage(initialPage).then(()=>setTimeout(prefetchAdminMenus,500)).catch(err=>{const page=qs("#"+initialPage);if(page)page.innerHTML=`<div class="card load-error"><h3>Unable to load this page</h3><p>${esc(err.message||"Please refresh and try again.")}</p><button class="btn primary" type="button" onclick="location.reload()">Refresh</button></div>`});if(state.user.role!=="admin"&&state.user.districtValid===false)setTimeout(()=>toast("Your registered district name is not recognized. Please contact the administrator to correct it."),150);
 }
 (async()=>{
   const token=sessionStorage.getItem("eieToken");
